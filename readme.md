@@ -2,10 +2,11 @@
 
 NFT Memorial 是一个去中心化应用程序 (dApp)，旨在为那些希望永久纪念或"安葬"自己不再需要的 NFT 资产的用户提供一种仪式性和象征性的方式。用户可以通过这个平台选择性地"烧毁"自己的 NFT，并创建一个纪念墓碑 NFT 来保存其记忆。
 
-## 演示视频
+## 演示视频  
+[演示视频下载](./demoshow/demoshow.mp4)
 
 <video width="100%" controls>
-  <source src="./demoshow/demoshow.mp4" type="video/mp4">
+  <source src="https://youtu.be/End9hZLugjs" type="video/mp4">
   您的浏览器不支持视频标签。您可以<a href="https://youtu.be/End9hZLugjs">在YouTube上观看我们的演示视频</a>。
 </video>
 
