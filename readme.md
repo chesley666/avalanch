@@ -4,7 +4,12 @@ NFT Memorial 是一个去中心化应用程序 (dApp)，旨在为那些希望永
 
 ## 演示视频
 
-查看我们的[演示视频](./demoshow/demoshow.mp4)，了解 NFT Memorial 的完整使用流程。
+<video width="100%" controls>
+  <source src="./demoshow/demoshow.mp4" type="video/mp4">
+  您的浏览器不支持视频标签。您可以<a href="https://youtu.be/End9hZLugjs">在YouTube上观看我们的演示视频</a>。
+</video>
+
+了解 NFT Memorial 的完整使用流程。
 
 ## 功能特点
 
