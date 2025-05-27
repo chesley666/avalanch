@@ -1,0 +1,31 @@
+{
+  "name": "nft-memorial",
+  "version": "1.0.0",
+  "description": "NFT Memorial dApp for burning NFTs and creating memorial tombstones",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network myavaL1",
+    "setup": "node scripts/setup.js"
+  },
+  "keywords": [
+    "NFT",
+    "blockchain",
+    "memorial",
+    "avalanche"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.6",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/contracts": "^4.8.0",
+    "chai": "^4.3.6",
+    "ethers": "^5.6.9",
+    "hardhat": "^2.9.9"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0"
+  }
+}
