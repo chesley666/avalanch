@@ -1,23 +1,22 @@
-# NFT Memorial - 数字资产纪念馆  
+# NFT纪念墓碑 - 数字资产纪念馆  
 
-NFT Memorial 是一个去中心化应用程序 (dApp)，旨在为那些希望永久纪念或"安葬"自己不再需要的 NFT 资产的用户提供一种仪式性和象征性的方式。用户可以通过这个平台选择性地"烧毁"自己的 NFT，并创建一个纪念墓碑 NFT 来保存其记忆。
+NFT纪念墓碑 是一个去中心化应用程序 (dApp)，随着web3蓬勃发展，各类项目层出不穷，机会与风险并存，发行NFT成本越来越低，也就造成了钱包里越来越多的“归0灵NFT”。  
+为了"安葬"自己不再需要的“归0灵NFT”，这个项目提供一种仪式性和象征性的方式。用户可以通过这个平台选择性地"火化"自己的NFT，悼念曾经踩过的坑，并创建一个纪念墓碑来保存其记忆。
 
 ## 演示视频  
-[演示视频下载](./demoshow/demoshow.mp4)
 
 <video width="100%" controls>
   <source src="https://youtu.be/End9hZLugjs" type="video/mp4">
   您的浏览器不支持视频标签。您可以<a href="https://youtu.be/End9hZLugjs">在YouTube上观看我们的演示视频</a>。
 </video>
 
-了解 NFT Memorial 的完整使用流程。
+[下载演示视频](./demoshow/demoshow.mp4)来了解 **NFT纪念墓碑** 的完整使用流程。
 
 ## 功能特点
 
-- **NFT 烧毁**：选择并安全烧毁不再需要的 NFT
+- **销毁归“灵”NFT**：选择并安全烧毁不再需要的 NFT 
 - **墓志铭创作**：为您的 NFT 创建个性化墓志铭
 - **纪念墓碑**：获得一个独特的纪念墓碑 NFT，记录被烧毁 NFT 的历史
-- **元数据保存**：自动保存被烧毁 NFT 的完整元数据
 - **MetaMask 集成**：支持 MetaMask 钱包的无缝连接与授权
 
 ## 项目结构
@@ -30,7 +29,7 @@ nft-memorial/
 ├── frontend/          # 前端应用程序
 │   ├── public/        # 静态资源
 │   └── src/           # React 源代码
-│       ├── components/    # UI 组件
+│       ├── components/    # UI组件代码
 │       ├── contracts/     # 合约 ABI
 │       └── utils/         # 工具函数
 ├── scripts/           # 部署脚本
@@ -43,11 +42,12 @@ nft-memorial/
 
 - Node.js (v14+)
 - MetaMask 浏览器扩展
-- Avalanche 或 myAva L1 网络连接
+- Avalanche L1 网络连接  
+  感谢 [@martin yeung](https://medium.com/@martinyeunghk) 的教程：[本地部署avalanche L1网络](https://medium.com/@martinyeunghk/avalanche-l1%E5%8D%80%E5%A1%8A%E9%8F%88%E6%A5%B5%E9%80%9F%E9%96%8B%E7%99%BC%E6%95%99%E5%AD%B8-3c622f82c3a6)
 
 ### 快速启动
 
-这个项目使用环境变量 (.env) 文件来存储敏感信息和配置参数。我们提供了一个设置向导来简化配置过程：
+这个项目使用环境变量 (.env) 文件来存储敏感信息和配置参数。我们提供了一个设置向导来简化配置过程 (可以用cnpm替换下边命令行中的npm)：
 
 ```bash
 # 克隆项目
@@ -187,6 +187,7 @@ npm start
 - `DEFAULT_CHAIN_ID`: 目标区块链网络ID
 - `MEMORIAL_NFT_ADDRESS`: 已部署的墓碑NFT合约地址 
 - `NFT_BURNER_ADDRESS`: 已部署的NFT烧毁合约地址
+- `REACT_APP_KNOWN_NFT_CONTRACTS`: 指定要销毁的NFT所在合约地址（前端env配置）
 - `GAS_PRICE_GWEI`: 部署时使用的Gas价格(Gwei)
 
 ### 前端参数
