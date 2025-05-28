@@ -1,16 +1,11 @@
 // 从环境变量中读取配置或使用硬编码的默认值
 
-// 这里使用用于测试的合约地址
-// 在生产环境中应替换为实际部署的合约地址
-const DEFAULT_MEMORIAL_NFT_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';  // 示例合约地址
-const DEFAULT_NFT_BURNER_ADDRESS = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0';   // 示例合约地址
-
 // 从环境变量中读取配置
 const config = {
   // 合约地址，从环境变量中获取或使用默认值
   contracts: {
-    MemorialNFT: process.env.REACT_APP_MEMORIAL_NFT_ADDRESS || DEFAULT_MEMORIAL_NFT_ADDRESS,
-    NFTBurner: process.env.REACT_APP_NFT_BURNER_ADDRESS || DEFAULT_NFT_BURNER_ADDRESS
+    MemorialNFT: process.env.REACT_APP_MEMORIAL_NFT_ADDRESS ,
+    NFTBurner: process.env.REACT_APP_NFT_BURNER_ADDRESS 
   },
   networks: {
     // Avalanche本地网络 (C-Chain)

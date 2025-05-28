@@ -11,12 +11,16 @@ const ERC721_ABI = [
   'function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)',
 ];
 
-// 从环境变量中获取已知的NFT合约地址 ：或者指定默认的NFT合约地址
-const KNOWN_NFT_CONTRACTS = process.env.REACT_APP_KNOWN_NFT_CONTRACTS 
-  ? process.env.REACT_APP_KNOWN_NFT_CONTRACTS.split(',') 
-  : ['0x55a4eDd8A2c051079b426E9fbdEe285368824a89'];
+// 从环境变量中获取已知的NFT合约地址，【？如何通过钱包地址读取？】
+let KNOWN_NFT_CONTRACTS = [];
+if (process.env.REACT_APP_KNOWN_NFT_CONTRACTS) {
+  KNOWN_NFT_CONTRACTS = process.env.REACT_APP_KNOWN_NFT_CONTRACTS.split(',');
+  console.log('成功从环境变量加载NFT合约列表:', KNOWN_NFT_CONTRACTS);
+} else {
+  console.error('警告: 环境变量 REACT_APP_KNOWN_NFT_CONTRACTS 未设置或为空');
+}
 
-// 用于IPFS上传的API密钥，从环境变量中获取
+// 用于IPFS上传的API密钥，从环境变量中获取； demo演示是使用mock数据
 const WEB3_STORAGE_TOKEN = process.env.REACT_APP_WEB3_STORAGE_API_KEY || '';
 
 // 块扫描限制
@@ -32,13 +36,11 @@ function utf8ToBase64(str) {
     // 首先将字符串转换为UTF-8编码的字节数组
     const encoder = new TextEncoder();
     const bytes = encoder.encode(str);
-    
     // 将字节数组转换为二进制字符串
     let binaryStr = '';
     for (let i = 0; i < bytes.length; i++) {
       binaryStr += String.fromCharCode(bytes[i]);
     }
-    
     // 使用btoa对二进制字符串进行base64编码
     return btoa(binaryStr);
   } catch (error) {
@@ -57,21 +59,14 @@ function utf8ToBase64(str) {
 export const fetchUserNFTs = async (address, library) => {
   const nfts = [];
   const provider = library ? library : new ethers.providers.Web3Provider(window.ethereum);
-  
   try {
     console.log("开始获取钱包地址的NFT:", address);
-    
-    // 获取可能的ERC721合约列表（可以从链上探索或通过API）
-    // 从环境变量或默认值获取已知的NFT合约
-    const knownContracts = KNOWN_NFT_CONTRACTS;
-    
-    // 扫描交易历史以获取交互过的合约（简化版）
+    const knownContracts = KNOWN_NFT_CONTRACTS;//knownContracts包括了指定的合约地址
+    // 方法1：扫描交易历史以获取交互过的合约（简化版）
     const blockNumber = await provider.getBlockNumber();
     const startBlock = Math.max(0, blockNumber - BLOCK_SCAN_LIMIT); // 使用环境变量中配置的块扫描限制
-    
     console.log(`扫描区块 ${startBlock} 到 ${blockNumber}`);
-    
-    // 1. 首先尝试通过provider的内置API获取NFTs (如果支持)
+    // 方法2：通过provider的内置API获取NFTs【未实现】
     let userNFTs = [];
     try {
       // 一些提供商如Alchemy、Infura等提供了getNFTs API
@@ -83,12 +78,10 @@ export const fetchUserNFTs = async (address, library) => {
       console.log("提供商API不可用:", providerApiError.message);
     }
     
-    // 2. 扫描用户拥有的代币
+    // 方法3：扫描用户拥有的代币
     console.log("开始直接查询NFT合约");
-    
     // 创建通用ERC721接口
     const erc721Interface = new ethers.utils.Interface(ERC721_ABI);
-    
     // 遍历用户交易以找到NFT转账事件
     const filter = {
       address: null, // 任何合约
@@ -100,39 +93,31 @@ export const fetchUserNFTs = async (address, library) => {
       fromBlock: startBlock,
       toBlock: 'latest'
     };
-    
     const logs = await provider.getLogs(filter);
     console.log(`找到 ${logs.length} 个可能的NFT转账事件`);
-    
-    // 收集唯一的合约地址
     const uniqueContracts = new Set();
     logs.forEach(log => {
       uniqueContracts.add(log.address.toLowerCase());
     });
-    
-    // 将已知合约添加到扫描列表
+
+    // 方法4： knownContracts指定合约 与 转账扫描到的合约 合并列表
     knownContracts.forEach(contract => {
       uniqueContracts.add(contract.toLowerCase());
     });
-    
     console.log(`找到 ${uniqueContracts.size} 个唯一的合约地址`);
-    
+
     // 检查每个合约，看用户是否拥有任何代币
     for (const contractAddress of uniqueContracts) {
       try {
         console.log(`检查合约: ${contractAddress}`);
         const nftContract = new ethers.Contract(contractAddress, ERC721_ABI, provider);
-        
         // 查询用户余额
         const balance = await nftContract.balanceOf(address);
-        
         if (balance.gt(0)) {
           console.log(`在合约 ${contractAddress} 中找到 ${balance.toString()} 个NFT`);
-          
           // 获取合约名称和符号
           let name = "未知NFT";
           let symbol = "NFT";
-          
           try {
             name = await nftContract.name();
             symbol = await nftContract.symbol();
@@ -168,22 +153,18 @@ export const fetchUserNFTs = async (address, library) => {
               let tokenURI = "";
               let metadata = {};
               let image = "";
-              
               try {
                 tokenURI = await nftContract.tokenURI(tokenId);
-                
                 // 处理不同格式的URI
                 if (tokenURI.startsWith("ipfs://")) {
                   const ipfsHash = tokenURI.replace("ipfs://", "");
                   tokenURI = `https://ipfs.io/ipfs/${ipfsHash}`;
                 }
-                
-                // 尝试获取元数据
+                // 尝试获取元数据（测试环境无元数据）
                 try {
                   const response = await fetch(tokenURI);
                   if (response.ok) {
                     metadata = await response.json();
-                    
                     // 处理图像URL
                     if (metadata.image) {
                       image = metadata.image;
@@ -200,7 +181,7 @@ export const fetchUserNFTs = async (address, library) => {
                 console.log("获取代币URI失败:", uriError.message);
               }
               
-              // 添加到NFT列表
+              // 添加到拥有的NFT列表
               nfts.push({
                 id: tokenId.toString(),
                 name: metadata.name || `${name} #${tokenId.toString()}`,
@@ -210,7 +191,6 @@ export const fetchUserNFTs = async (address, library) => {
                 image: image || `https://via.placeholder.com/350x350.png?text=${encodeURIComponent(name+' #'+tokenId.toString())}`,
                 attributes: metadata.attributes || []
               });
-              
               console.log(`已添加NFT: ${name} #${tokenId.toString()}`);
             } catch (tokenError) {
               console.log(`处理代币时出错:`, tokenError.message);
@@ -221,14 +201,12 @@ export const fetchUserNFTs = async (address, library) => {
         console.log(`无法查询合约 ${contractAddress}:`, contractError.message);
       }
     }
-    
     console.log(`总共找到 ${nfts.length} 个NFT`);
     
-    // 如果没有找到任何NFT，可以返回模拟数据进行测试
+    // 如果没有找到任何NFT
     if (nfts.length === 0) {
       console.warn("未找到真实NFT，考虑检查钱包地址或网络连接");
     }
-    
     return nfts;
   } catch (error) {
     console.error("获取NFT时出现错误:", error);
@@ -363,22 +341,20 @@ export const uploadToIPFS = async (metadata) => {
   // 检查是否配置了Web3.Storage API密钥
   if (WEB3_STORAGE_TOKEN) {
     try {
-      // 实现实际的IPFS上传
+      // IPFS上传（测试环境没有配置ipfs）
       const client = new Web3Storage({ token: WEB3_STORAGE_TOKEN });
       const blob = new Blob([JSON.stringify(metadata)], { type: 'application/json' });
       const file = new File([blob], 'metadata.json');
-      
       console.log("开始上传到IPFS...");
       const cid = await client.put([file]);
       console.log("成功上传到IPFS, CID:", cid);
-      
       return `ipfs://${cid}/metadata.json`;
     } catch (error) {
       console.error("IPFS上传失败:", error);
       return generateMockIpfsUri();
     }
   } else {
-    console.warn("未配置Web3.Storage API密钥，使用模拟数据");
+    console.warn("未配置Web3.Storage API密钥, 使用模拟IPFS URI");
     return generateMockIpfsUri();
   }
 };
@@ -390,9 +366,7 @@ export const uploadToIPFS = async (metadata) => {
 const generateMockIpfsUri = async () => {
   // 模拟IPFS URI
   const mockIpfsUri = `ipfs://bafybeihkqvh5zr3fpbhvirlfxinkrnjxxe4z4pvf5bm2ffcxk5i5j7gjay/metadata.json`;
-  
   // 模拟上传延迟
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
   return mockIpfsUri;
 };

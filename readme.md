@@ -58,7 +58,7 @@ cd nft-memorial
 npm install
 cd frontend && npm install && cd ..
 
-# 运行设置向导
+# 运行设置向导（会自动配置环境变量）
 npm run setup
 ```
 
@@ -67,6 +67,21 @@ npm run setup
 2. 配置网络参数
 3. 设置合约地址(如果已部署)
 4. 配置其他可选参数
+
+设置完成后，您可以编译智能合约并部署：
+
+```bash
+# 编译智能合约
+npm run compile
+
+# 部署智能合约到指定网络
+npm run deploy
+```
+
+部署脚本将自动执行以下操作：
+1. 部署 MemorialNFT 和 NFTBurner 合约
+2. 更新项目和前端的环境文件中的合约地址
+3. 自动复制合约 ABI 到前端项目
 
 ### 手动配置
 

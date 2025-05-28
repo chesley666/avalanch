@@ -14,8 +14,8 @@ import config from './config';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // 从配置文件获取合约地址
-const MEMORIAL_NFT_ADDRESS = config.contracts.MemorialNFT || '0x0000000000000000000000000000000000000000';
-const NFT_BURNER_ADDRESS = config.contracts.NFTBurner || '0x0000000000000000000000000000000000000000';
+const MEMORIAL_NFT_ADDRESS = config.contracts.MemorialNFT;
+const NFT_BURNER_ADDRESS = config.contracts.NFTBurner;
 
 // 检查合约地址是否有效
 const isValidAddress = (address) => {
@@ -33,13 +33,13 @@ function App() {
   const [selectedNFTs, setSelectedNFTs] = useState([]);
   const [epitaph, setEpitaph] = useState("");
   const [memorialNFT, setMemorialNFT] = useState(null);
-  const [step, setStep] = useState(1); // 1: Connect wallet, 2: Select NFTs, 3: Enter Epitaph, 4: View Memorial
+  const [step, setStep] = useState(1); // 1: 链接钱包, 2: 选择NFT, 3: 输入墓志铭, 4: 火化旧NFT并创建墓碑NFT
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [networkError, setNetworkError] = useState("");
   const [contractsLoaded, setContractsLoaded] = useState(false);
 
-  // 检查当前网络是否支持
+  // 检查当前钱包的网络是否支持
   useEffect(() => {
     if (active && chainId) {
       const supportedNetwork = Object.keys(config.networks).includes(chainId.toString());
@@ -50,7 +50,6 @@ function App() {
       }
     }
   }, [active, chainId]);
-
   // 检查合约地址是否有效
   useEffect(() => {
     if (!isValidAddress(MEMORIAL_NFT_ADDRESS)) {
@@ -64,11 +63,10 @@ function App() {
       setContractsLoaded(false);
       return;
     }
-
     setContractsLoaded(true);
   }, []);
 
-  // Connect wallet
+  // 链接钱包,可以自动添加自定义网络
   const connectWallet = async () => {
     setLoading(true);
     setError("");
@@ -77,23 +75,20 @@ function App() {
       if (!window.ethereum) {
         throw new Error("未检测到以太坊钱包。请安装MetaMask或其他兼容的钱包扩展。");
       }
-      
       // 确保要连接的网络存在
       const targetChainId = config.defaultChainId;
       console.log("目标链ID:", targetChainId);
-      
-      // 尝试添加自定义网络（如果需要）
+      // 尝试添加自定义网络
       const networkConfig = config.networks[targetChainId];
       if (networkConfig) {
         try {
           // 尝试添加自定义网络
           await addCustomNetwork(targetChainId, networkConfig);
         } catch (addNetworkError) {
-          console.warn("添加网络警告:", addNetworkError);
+          console.warn("添加网络失败:", addNetworkError);
           // 继续尝试连接，即使添加网络失败
         }
       }
-      
       await activate(injected, async (error) => {
         console.error("钱包连接错误:", error);
         if (error.name === 'UnsupportedChainIdError') {
@@ -127,7 +122,6 @@ function App() {
         }
         setLoading(false);
       }, false);
-      
       console.log("钱包连接成功!");
     } catch (error) {
       console.error("钱包连接异常:", error);
@@ -139,10 +133,8 @@ function App() {
   // 添加自定义网络到MetaMask
   const addCustomNetwork = async (chainId, networkConfig) => {
     if (!window.ethereum) return;
-    
     const provider = window.ethereum;
     const formattedChainId = `0x${Number(chainId).toString(16)}`;
-    
     try {
       await provider.request({
         method: 'wallet_addEthereumChain',
@@ -168,7 +160,7 @@ function App() {
     }
   };
 
-  // Disconnect wallet
+  // 断开钱包连接
   const disconnectWallet = async () => {
     try {
       deactivate();
@@ -181,7 +173,7 @@ function App() {
     }
   };
 
-  // Load user's NFTs after wallet connection
+  // 加载用户NFTs
   useEffect(() => {
     const loadNFTs = async () => {
       if (active && account && library && !networkError) {
@@ -197,13 +189,12 @@ function App() {
         }
       }
     };
-
     if (active) {
       loadNFTs();
     }
   }, [active, account, library, networkError]);
 
-  // Handle NFT selection
+  // 处理NFT选择
   const handleSelectNFT = (nft) => {
     if (selectedNFTs.some((selected) => selected.id === nft.id && selected.contract === nft.contract)) {
       setSelectedNFTs(selectedNFTs.filter((selected) => 
@@ -214,74 +205,60 @@ function App() {
     }
   };
 
-  // Handle NFT burning and memorial creation
+  // 处理NFT销毁和纪念创建
   const createMemorial = async () => {
     if (selectedNFTs.length === 0) {
       setError("请至少选择一个NFT进行纪念");
       return;
     }
-
     if (!epitaph.trim()) {
       setError("请为您的纪念墓碑输入墓志铭");
       return;
     }
-
     if (!isValidAddress(MEMORIAL_NFT_ADDRESS)) {
       setError(`墓碑NFT合约地址无效或未设置: ${MEMORIAL_NFT_ADDRESS}`);
       return;
     }
-
     if (!isValidAddress(NFT_BURNER_ADDRESS)) {
       setError(`NFT销毁合约地址无效或未设置: ${NFT_BURNER_ADDRESS}`);
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
+      // 合约地址和abi
       console.log("使用的合约地址:", {
         MEMORIAL_NFT_ADDRESS,
         NFT_BURNER_ADDRESS
       });
-
-      // Get contract instances
       const signer = library.getSigner(account);
       const memorialContract = new ethers.Contract(
         MEMORIAL_NFT_ADDRESS,
         MemorialNFTABI.abi,
         signer
       );
-
-      // 始终使用真实NFT数据，不再检测mock数据
       let nftContracts = [];
       let tokenIds = [];
       let nftNames = [];
-
-      // 使用真实NFT合约
       const burnerContract = new ethers.Contract(
         NFT_BURNER_ADDRESS,
         NFTBurnerABI.abi,
         signer
       );
-
-      // Approve and burn each selected NFT
       const useTransfer = [];
 
+      // 1.遍历选中的NFTs，授权NFTBurner合约转移NFT
       for (const nft of selectedNFTs) {
         const nftContract = new ethers.Contract(
           nft.contract,
           ['function approve(address to, uint256 tokenId) public', 'function isApprovedForAll(address owner, address operator) public view returns (bool)'],
           signer
         );
-
-        // 1.授权NFTBurner合约 转移NFT
+        // 授权转移NFT
         const isApproved = await nftContract.isApprovedForAll(account, NFT_BURNER_ADDRESS);
-        
         if (!isApproved) {
           await nftContract.approve(NFT_BURNER_ADDRESS, nft.id);
         }
-
         nftContracts.push(nft.contract);
         tokenIds.push(nft.id);
         useTransfer.push(true); // Default to transfer method
@@ -300,17 +277,16 @@ function App() {
       await burnTx.wait();
       console.log("NFT烧毁成功:", burnTx.hash);
 
-      // Generate and upload metadata for memorial NFT
+      // 3-1.生成墓碑NFT的元数据
       const metadata = generateMetadata(
         account,
         epitaph,
         selectedNFTs
       );
-      
       const metadataURI = await uploadToIPFS(metadata);
       console.log("元数据已上传:", metadataURI);
 
-      // 3.创建墓碑NFT
+      // 3-2.创建墓碑NFT
       const createTx = await memorialContract.createMemorial(
         account,
         metadataURI,
@@ -325,13 +301,11 @@ function App() {
       const receipt = await createTx.wait();
       console.log("墓碑NFT创建成功:", createTx.hash);
 
-      // Get the token ID using multiple fallback methods
+      // 3-3. 获取刚才创建的tokenId
       let tokenId;
-      
       try {
         // 方法1: 检查MemorialCreated事件
         const memorialEvent = receipt.events?.find(e => e && e.event === 'MemorialCreated');
-        
         if (memorialEvent && memorialEvent.args && memorialEvent.args.tokenId) {
           // 如果找到了事件，从事件中获取tokenId
           tokenId = memorialEvent.args.tokenId.toString();
@@ -343,12 +317,11 @@ function App() {
           const transferEvent = receipt.events?.find(e => {
             // Transfer事件通常有三个indexed参数：from, to, tokenId
             return e && e.topics && e.topics.length === 4 && 
-                  // 第一个topic是事件签名
-                  e.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' && 
+                  // 第一个topic是事件签名，e.topics[0] === ethers.utils.id("Transfer(address,address,uint256)") 
+                  e.topics[0] === ethers.utils.id("Transfer(address,address,uint256)") && 
                   // 第三个topic是接收者地址
                   e.topics[2].indexOf(account.substring(2).toLowerCase()) !== -1;
           });
-          
           if (transferEvent && transferEvent.topics && transferEvent.topics[3]) {
             // 从Transfer事件中获取tokenId (第四个topic)
             tokenId = parseInt(transferEvent.topics[3], 16).toString();
@@ -356,7 +329,6 @@ function App() {
           } else {
             // 方法3: 直接从交易日志中提取最后一个创建的NFT ID
             console.log("没有找到Transfer事件，尝试直接解析交易日志");
-            
             // 创建一个简单的墓碑NFT对象，无需tokenId
             setMemorialNFT({
               epitaph: epitaph,
@@ -366,52 +338,44 @@ function App() {
               network: chainId ? config.networks[chainId] : { name: "测试网络" },
               txHash: createTx.hash // 保存交易哈希以供参考
             });
-            
             // 跳过获取详细信息，直接进入下一步
             setStep(4);
             return;
           }
         }
-        
         // 如果已获取到tokenId，则获取详细信息
         const [creator, creationDate, epitaphText, burnedNFTContracts, burnedNFTIds, burnedNFTNames] = 
           await memorialContract.getMemorialDetails(tokenId);
-        
         setMemorialNFT({
           id: tokenId,
           epitaph: epitaphText,
           creationDate: new Date(creationDate.toNumber() * 1000),
           burnedNFTs: burnedNFTNames,
           uri: metadataURI,
-          network: chainId ? config.networks[chainId] : { name: "测试网络" },
+          network: chainId ? config.networks[chainId] : { name: "未知网络" },
           txHash: createTx.hash
         });
-        
       } catch (tokenIdError) {
         console.error("获取tokenId错误:", tokenIdError);
-        
         // 即使无法获取tokenId，仍然创建基本的墓碑NFT对象
         setMemorialNFT({
           epitaph: epitaph,
           creationDate: new Date(),
           burnedNFTs: selectedNFTs.map(nft => nft.name || `NFT #${nft.id}`),
           uri: metadataURI,
-          network: chainId ? config.networks[chainId] : { name: "测试网络" },
+          network: chainId ? config.networks[chainId] : { name: "未知网络" },
           txHash: createTx.hash
         });
       }
-
-      // Move to next step
       setStep(4);
     } catch (error) {
       console.error("Error creating memorial:", error);
       setError(`创建墓碑纪念失败：${error.message || '未知错误'}`);
     }
-
     setLoading(false);
   };
 
-  // Render different steps
+  // 渲染每个步骤页面内容
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -478,7 +442,7 @@ function App() {
     }
   };
 
-  // Effect to update step when wallet is connected
+  // 当钱包连接成功且处于第二步时，自动跳转到第三步
   useEffect(() => {
     if (active && step === 1 && !networkError) {
       setStep(2);

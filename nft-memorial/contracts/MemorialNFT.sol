@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-
+//创建和管理墓碑NFT，继承自 OpenZeppelin 的 ERC721URIStorage，支持为每个墓碑设置唯一的 URI
 contract MemorialNFT is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -27,7 +27,7 @@ contract MemorialNFT is ERC721URIStorage {
     );
 
     constructor() ERC721("Memorial NFT", "MNFT") {}
-
+    //铸造mint
     function createMemorial(
         address recipient,
         string memory tokenURI,
@@ -43,6 +43,7 @@ contract MemorialNFT is ERC721URIStorage {
         uint256 newTokenId = _tokenIds.current();
         
         _mint(recipient, newTokenId);
+        //继承自 OpenZeppelin 的 ERC721URIStorage，支持为每个墓碑设置唯一的 URI
         _setTokenURI(newTokenId, tokenURI);
         
         memorials[newTokenId] = Memorial({
@@ -54,6 +55,7 @@ contract MemorialNFT is ERC721URIStorage {
             burnedNFTNames: burnedNFTNames
         });
         
+        // 触发 MemorialCreated 事件，前端会监听这个事件来获取tokenId
         emit MemorialCreated(
             newTokenId,
             msg.sender,
@@ -63,7 +65,7 @@ contract MemorialNFT is ERC721URIStorage {
         
         return newTokenId;
     }
-
+    //获取墓碑详情
     function getMemorialDetails(uint256 tokenId) public view returns (
         address creator,
         uint256 creationDate,

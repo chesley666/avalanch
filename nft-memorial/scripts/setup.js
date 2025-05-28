@@ -1,10 +1,11 @@
 /**
- * NFT Memorial 项目设置脚本
+ * NFT Memorial 项目设置向导
  * 
  * 该脚本将帮助用户：
  * 1. 创建必要的 .env 文件
  * 2. 收集所需的配置信息
  * 3. 自动设置项目环境
+ * 4. 复制 ABI 文件到前端项目
  */
 
 const fs = require('fs');
@@ -20,6 +21,8 @@ const rl = readline.createInterface({
 // 项目根目录
 const rootDir = path.join(__dirname, '..');
 const frontendDir = path.join(rootDir, 'frontend');
+const artifactsDir = path.join(rootDir, 'artifacts/contracts');
+const frontendContractsDir = path.join(frontendDir, 'src/contracts');
 
 // .env文件路径
 const rootEnvPath = path.join(rootDir, '.env');
@@ -60,6 +63,9 @@ async function setup() {
 
   // 创建.env文件
   await createEnvFiles(config);
+  
+  // 复制 ABI 文件到前端项目
+  await copyABIToFrontend();
 
   console.log('');
   console.log('========================================');
@@ -154,6 +160,22 @@ async function createEnvFiles(config) {
     console.log(`已创建 ${frontendEnvPath} 文件`);
   } catch (error) {
     console.error('创建环境文件时出错:', error);
+    process.exit(1);
+  }
+}
+
+// 复制 ABI 文件到前端项目
+async function copyABIToFrontend() {
+  try {
+    const contracts = fs.readdirSync(artifactsDir);
+    contracts.forEach(contract => {
+      const contractPath = path.join(artifactsDir, contract, `${contract}.json`);
+      const destPath = path.join(frontendContractsDir, `${contract}.json`);
+      fs.copyFileSync(contractPath, destPath);
+      console.log(`已复制 ${contract}.json 到前端项目`);
+    });
+  } catch (error) {
+    console.error('复制 ABI 文件时出错:', error);
     process.exit(1);
   }
 }

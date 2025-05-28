@@ -37,7 +37,7 @@ async function main() {
   await nftBurner.deployed();
   console.log("NFTBurner合约已部署至:", nftBurner.address);
 
-  // 设置Memorial NFT地址到NFTBurner合约
+  // ** 设置Memorial NFT地址到NFTBurner合约
   console.log("\n正在设置MemorialNFT地址到NFTBurner合约...");
   const setTx = await nftBurner.setMemorialNFT(memorialNFT.address, {
     gasPrice: gasPrice,
@@ -64,6 +64,9 @@ async function main() {
 
   // 自动更新.env文件
   await updateEnvFiles(memorialNFT.address, nftBurner.address, network.config.chainId);
+
+  // 复制 ABI 到前端项目
+  await copyABIToFrontend();
 }
 
 // 更新主项目和前端的.env文件
@@ -96,6 +99,55 @@ async function updateEnvFiles(memorialAddress, burnerAddress, chainId) {
     console.log("环境配置文件更新完成！");
   } catch (error) {
     console.error("更新环境配置文件时出错:", error);
+  }
+}
+
+// 复制 ABI 到前端项目
+async function copyABIToFrontend() {
+  try {
+    console.log("\n正在复制合约 ABI 到前端项目...");
+    
+    // 确保前端合约目录存在
+    const frontendContractsDir = path.join(__dirname, '..', 'frontend', 'src', 'contracts');
+    if (!fs.existsSync(frontendContractsDir)) {
+      fs.mkdirSync(frontendContractsDir, { recursive: true });
+    }
+    
+    // 复制 MemorialNFT ABI
+    const memorialNFTPath = path.join(__dirname, '..', 'artifacts', 'contracts', 'MemorialNFT.sol', 'MemorialNFT.json');
+    if (fs.existsSync(memorialNFTPath)) {
+      const memorialNFTArtifact = require(memorialNFTPath);
+      const memorialNFTABI = {
+        abi: memorialNFTArtifact.abi
+      };
+      fs.writeFileSync(
+        path.join(frontendContractsDir, 'MemorialNFT.json'),
+        JSON.stringify(memorialNFTABI, null, 2)
+      );
+      console.log("已复制 MemorialNFT ABI 到前端项目");
+    } else {
+      console.warn("警告：找不到 MemorialNFT 合约 ABI 文件");
+    }
+    
+    // 复制 NFTBurner ABI
+    const nftBurnerPath = path.join(__dirname, '..', 'artifacts', 'contracts', 'NFTBurner.sol', 'NFTBurner.json');
+    if (fs.existsSync(nftBurnerPath)) {
+      const nftBurnerArtifact = require(nftBurnerPath);
+      const nftBurnerABI = {
+        abi: nftBurnerArtifact.abi
+      };
+      fs.writeFileSync(
+        path.join(frontendContractsDir, 'NFTBurner.json'),
+        JSON.stringify(nftBurnerABI, null, 2)
+      );
+      console.log("已复制 NFTBurner ABI 到前端项目");
+    } else {
+      console.warn("警告：找不到 NFTBurner 合约 ABI 文件");
+    }
+    
+    console.log("ABI 文件复制完成！");
+  } catch (error) {
+    console.error("复制 ABI 文件时出错:", error);
   }
 }
 
