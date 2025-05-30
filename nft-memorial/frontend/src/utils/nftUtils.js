@@ -51,7 +51,7 @@ function utf8ToBase64(str) {
 }
 
 /**
- * 获取用户钱包中的所有NFT
+ * **step2：扫描钱包中的NFT
  * @param {string} address 用户钱包地址
  * @param {object} library ethers提供的库
  * @returns {Promise<Array>} NFT数组
@@ -61,24 +61,25 @@ export const fetchUserNFTs = async (address, library) => {
   const provider = library ? library : new ethers.providers.Web3Provider(window.ethereum);
   try {
     console.log("开始获取钱包地址的NFT:", address);
-    const knownContracts = KNOWN_NFT_CONTRACTS;//knownContracts包括了指定的合约地址
-    // 方法1：扫描交易历史以获取交互过的合约（简化版）
-    const blockNumber = await provider.getBlockNumber();
-    const startBlock = Math.max(0, blockNumber - BLOCK_SCAN_LIMIT); // 使用环境变量中配置的块扫描限制
-    console.log(`扫描区块 ${startBlock} 到 ${blockNumber}`);
-    // 方法2：通过provider的内置API获取NFTs【未实现】
+    // 方法1：配置中读取，knownContracts包括了指定的合约地址
+    const knownContracts = KNOWN_NFT_CONTRACTS;
+    
+    // 方法2：通过provider的内置API获取NFTs：【未实现】
     let userNFTs = [];
     try {
-      // 一些提供商如Alchemy、Infura等提供了getNFTs API
+      // 一些提供商如Alchemy:getNftsForOwner、Infura等提供了getNFTs API
       if (provider.connection && provider.connection.url) {
         console.log("尝试使用提供商API获取NFTs");
-        // 实现特定于提供商的API调用
+        // **实现特定于提供商的API调用
       }
     } catch (providerApiError) {
       console.log("提供商API不可用:", providerApiError.message);
     }
-    
-    // 方法3：扫描用户拥有的代币
+
+    // 方法3：扫描限定的区块
+    const blockNumber = await provider.getBlockNumber();
+    const startBlock = Math.max(0, blockNumber - BLOCK_SCAN_LIMIT); // 使用环境变量中配置的块扫描限制
+    console.log(`扫描区块 ${startBlock} 到 ${blockNumber}`);
     console.log("开始直接查询NFT合约");
     // 创建通用ERC721接口
     const erc721Interface = new ethers.utils.Interface(ERC721_ABI);
@@ -100,7 +101,7 @@ export const fetchUserNFTs = async (address, library) => {
       uniqueContracts.add(log.address.toLowerCase());
     });
 
-    // 方法4： knownContracts指定合约 与 转账扫描到的合约 合并列表
+    // 结果合并：knownContracts指定合约 + 扫描合约 
     knownContracts.forEach(contract => {
       uniqueContracts.add(contract.toLowerCase());
     });

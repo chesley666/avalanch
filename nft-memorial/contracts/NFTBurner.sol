@@ -47,11 +47,11 @@ contract NFTBurner is Ownable {
         
         for (uint256 i = 0; i < nftContracts.length; i++) {
             if (useTransfer[i]) {
-                //transfer method
+                //方法1：转账
                 require(IERC721(nftContracts[i]).ownerOf(tokenIds[i]) == msg.sender, "Not the owner of this NFT");
                 IERC721(nftContracts[i]).transferFrom(msg.sender, address(0xdead), tokenIds[i]);
             } else {
-                //burn method
+                //方法2：调用burn
                 require(IERC721(nftContracts[i]).ownerOf(tokenIds[i]) == msg.sender, "Not the owner of this NFT");
                 IERC721Burnable(nftContracts[i]).burn(tokenIds[i]);
             }

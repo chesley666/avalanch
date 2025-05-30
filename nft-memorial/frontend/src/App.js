@@ -269,7 +269,7 @@ function App() {
       const burnTx = await burnerContract.burnMultipleNFTs(
         nftContracts, 
         tokenIds,
-        useTransfer,
+        useTransfer,//默认使用转账的方式
         {
           gasLimit: 3000000 // 设置较高的gas限制，以确保交易成功
         }
