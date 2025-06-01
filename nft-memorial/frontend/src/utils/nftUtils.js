@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { Web3Storage } from 'web3.storage';
+import { create as createIPFSClient } from 'ipfs-http-client';
 
 // NFT接口的最小ABI，用于获取元数据
 const ERC721_ABI = [
@@ -21,6 +22,7 @@ if (process.env.REACT_APP_KNOWN_NFT_CONTRACTS) {
 }
 
 // 用于IPFS上传的API密钥，从环境变量中获取； demo演示是使用mock数据
+const IPFS_API_URL = process.env.REACT_APP_IPFS_API_URL || '';  // 本地IPFS节点地址
 const WEB3_STORAGE_TOKEN = process.env.REACT_APP_WEB3_STORAGE_API_KEY || '';
 
 // 块扫描限制
@@ -339,6 +341,19 @@ const generateTombstoneSVG = (epitaph, burnedNFTs) => {
  * @returns {Promise<string>} IPFS URI
  */
 export const uploadToIPFS = async (metadata) => {
+  // 先试本地节点
+  if (IPFS_API_URL) {
+    try {
+      console.log('本地IPFS:', IPFS_API_URL, "\nmetadata:", metadata);
+      const ipfs = createIPFSClient({ url: IPFS_API_URL });
+      // 不再使用 Buffer，而是直接上传字符串
+      const result = await ipfs.add(JSON.stringify(metadata));
+      console.log('本地 IPFS 上传成功，CID=', result.cid.toString());
+      return `ipfs://${result.cid.toString()}`; 
+    } catch (e) {
+      console.warn('本地 IPFS 上传失败，回退到 Web3.Storage：', e.message);
+    }
+  }
   // 检查是否配置了Web3.Storage API密钥
   if (WEB3_STORAGE_TOKEN) {
     try {
